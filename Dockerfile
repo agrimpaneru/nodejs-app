@@ -1,18 +1,20 @@
+# Use official Node.js image as base
 FROM node:18-alpine
 
+# Set the working directory inside the container to /app
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+# Copy package.json and package-lock.json first (to leverage Docker cache)
+COPY app/package*.json ./
 
-# Install prom-client along with other dependencies
+# Install production dependencies
 RUN npm install prom-client --save && npm ci --only=production
 
-# Copy all application files
-COPY . .
+# Copy the rest of the application code into the container
+COPY app/ .
 
-# Expose port for app
+# Expose port 3000 for the Node.js app
 EXPOSE 3000
 
-# Start the application
+# Set the default command to run the app
 CMD ["npm", "start"]

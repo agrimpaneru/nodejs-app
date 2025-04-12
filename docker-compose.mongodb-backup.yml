@@ -1,0 +1,15 @@
+version: '3.8'
+services:
+  mongodb-backup:
+    image: mongo:latest
+    volumes:
+      - ./backup/backup-mongodb.sh:/backup.sh
+      - ./backup/local-backups:/backups
+    networks:
+      - app-network
+    entrypoint: ["/bin/bash", "-c", "chmod +x /backup.sh && /backup.sh && exit"]
+    restart: "no"
+
+networks:
+  app-network:
+    external: true
