@@ -1,0 +1,22 @@
+image: atlassian/default-image:3
+
+pipelines:
+  branches:
+    master:  # This ensures the pipeline only runs on the master branch
+      - step:
+          name: Build and Push Docker Image
+          services:
+            - docker
+          script:
+            # Login to Docker Hub using secure credentials
+            - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+            
+            # Extract commit hash for versioning
+            - COMMIT_HASH=$(git rev-parse --short HEAD)
+            
+            # Build Docker image
+            - docker build -t $DOCKER_USERNAME/nodejs-mongodb-app:latest -t $DOCKER_USERNAME/nodejs-mongodb-app:$COMMIT_HASH .
+            
+            # Push images to Docker Hub
+            - docker push $DOCKER_USERNAME/nodejs-mongodb-app:latest
+            - docker push $DOCKER_USERNAME/nodejs-mongodb-app:$COMMIT_HASH
