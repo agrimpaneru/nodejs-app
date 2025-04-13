@@ -51,7 +51,7 @@ This command builds and starts all services defined in `docker-compose.yml`. The
 
 ### Step 3: Verify Deployment
 
-Access the application at `http://localhost:80` (or the configured domain).
+Access the application at `http://localhost:8001` .
 
 Check container status:
 
@@ -78,7 +78,7 @@ docker-compose -f docker-compose.monitoring.yml up -d
 ### Step 2: Access Monitoring Tools
 
 - Prometheus: `http://localhost:9090`
-- Grafana: `http://localhost:3000`
+- Grafana: `http://localhost:3001`
 
 ### Step 3: Configure Grafana
 
@@ -109,14 +109,7 @@ docker-compose -f docker-compose.mongodb-backup.yml up
 
 This executes the `backup-mongodb.sh` script which creates compressed backups of the MongoDB database.
 
-### Backup Schedule
 
-To schedule regular backups, consider setting up a cron job:
-
-```bash
-# Example: Run backup daily at 2 AM
-0 2 * * * cd /path/to/project && docker-compose -f docker-compose.mongodb-backup.yml up
-```
 
 ### Backup Location
 
@@ -190,6 +183,3 @@ docker-compose logs [service-name]
 docker-compose logs -f [service-name]
 ```
 
-## CI/CD Integration
-
-The project includes a `bitbucket-pipelines.yml` file for continuous integration and deployment through Bitbucket Pipelines. Refer to this file for the defined CI/CD workflow.
