@@ -1,183 +1,195 @@
-# Node.js Dockerized Application with Monitoring and MongoDB Backups
+# Node.js Application with Docker, Monitoring, and Backup
 
-This repository contains a fully Dockerized Node.js application integrated with:
+This repository contains a Node.js application deployed with Docker, including monitoring with Prometheus and Grafana, and MongoDB backup functionality.
 
-- **NGINX** as a reverse proxy
-- **MongoDB** as the backend database
-- **Prometheus + Grafana** for application monitoring
-- **MongoDB backup system** with automated cleanup
-- All orchestrated using **Docker Compose**
+## Project Structure
 
----
+```
+├── Dockerfile                         # Docker configuration for the Node.js app
+├── app                                # Application directory
+│   ├── app.js                         # Main application file
+│   ├── package-lock.json              # NPM lock file
+│   └── package.json                   # NPM package configuration
+├── backup                             # Backup scripts and storage
+│   ├── backup-mongodb.sh              # MongoDB backup script
+│   └── local-backups                  # Directory for storing local backups
+│       ├── mongodb_backup_20250412_163308.gz   # Example backup file
+│       └── mongodb_backup_20250412_163711.gz   # Example backup file
+├── bitbucket-pipelines.yml            # Bitbucket CI/CD configuration
+├── docker-compose.mongodb-backup.yml  # Docker Compose for MongoDB backup
+├── docker-compose.monitoring.yml      # Docker Compose for monitoring services
+├── docker-compose.yml                 # Main Docker Compose for application
+├── nginx                              # NGINX configuration
+│   └── nginx.conf                     # NGINX server configuration
+└── prometheus                         # Prometheus configuration
+    └── prometheus.yml                 # Prometheus settings
+```
 
-## 📁 Project Structure
+## Deployment Instructions
 
-. ├── Dockerfile # Node.js app Dockerfile ├── app/ # Node.js application │ ├── app.js │ ├── package.json │ └── package-lock.json ├── backup/ # Backup scripts and local backups │ ├── backup-mongodb.sh │ └── local-backups/ ├── nginx/ # NGINX reverse proxy config │ └── nginx.conf ├── prometheus/ # Prometheus config │ └── prometheus.yml ├── bitbucket-pipelines.yml # CI/CD Pipeline (optional) ├── docker-compose.yml # Main application stack ├── docker-compose.monitoring.yml # Monitoring stack (Prometheus + Grafana) └── docker-compose.mongodb-backup.yml # MongoDB backup service
+### Prerequisites
 
-yaml
-Copy
-Edit
+- Docker and Docker Compose installed
+- Git for repository cloning
 
----
+### Step 1: Clone the Repository
 
-## 🚀 Deployment Instructions
+```bash
+git clone [repository-url]
+cd [repository-name]
+```
 
-### Step 1: Start Core Application
+### Step 2: Deploy the Application
 
-To deploy the Node.js application with MongoDB and NGINX reverse proxy, run:
+Deploy the main application stack including Node.js app, MongoDB, and NGINX reverse proxy:
 
 ```bash
 docker-compose up -d
 ```
-This will:
 
-Start the Node.js app on port 3000
+This command builds and starts all services defined in `docker-compose.yml`. The `-d` flag runs containers in the background.
 
-Start MongoDB
+### Step 3: Verify Deployment
 
-Start NGINX reverse proxy listening on port 80
+Access the application at `http://localhost:80` (or the configured domain).
 
-Step 2: Access the Application
-Visit your browser:
+Check container status:
 
-text
-Copy
-Edit
-http://localhost
-This routes through NGINX to nodejs-app:3000.
+```bash
+docker-compose ps
+```
 
-🌐 NGINX Configuration
-Located at nginx/nginx.conf:
+View application logs:
 
-nginx
-Copy
-Edit
-server {
-  listen 80;
+```bash
+docker-compose logs -f nodejs-app
+```
 
-  location / {
-    proxy_pass http://nodejs-app:3000;
-    proxy_http_version 1.1;
-    proxy_set_header Upgrade $http_upgrade;
-    proxy_set_header Connection 'upgrade';
-    proxy_set_header Host $host;
-    proxy_set_header X-Real-IP $remote_addr;
-    proxy_cache_bypass $http_upgrade;
-  }
-}
-This forwards all requests to the internal Node.js container.
+## Monitoring Setup
 
-📊 Monitoring with Prometheus + Grafana
-Step 1: Start Monitoring Stack
-bash
-Copy
-Edit
+### Step 1: Deploy Monitoring Stack
+
+Deploy Prometheus and Grafana for monitoring:
+
+```bash
 docker-compose -f docker-compose.monitoring.yml up -d
-This starts:
+```
 
-Prometheus (default port: 9090)
+### Step 2: Access Monitoring Tools
 
-Grafana (default port: 3001)
+- Prometheus: `http://localhost:9090`
+- Grafana: `http://localhost:3000`
 
-Step 2: Metric Exposure and Scraping
-The Node.js application exposes Prometheus-compatible metrics on http://nodejs-app:3000/metrics.
+### Step 3: Configure Grafana
 
-Prometheus scrapes metrics every 15 seconds as defined in prometheus/prometheus.yml.
+1. Log in to Grafana (default credentials: admin/admin)
+2. Add Prometheus as a data source:
+   - URL: `http://prometheus:9090`
+   - Access: Server (default)
+3. Import dashboards or create custom ones for Node.js metrics
 
-Step 3: Access Monitoring Dashboards
-Prometheus: http://localhost:9090
+## Monitoring Details
 
-Grafana: http://localhost:3001
+The monitoring system consists of:
 
-Default login:
+- **Prometheus**: Scrapes metrics from the Node.js application every 15 seconds through the metrics endpoint exposed on port 3000.
+- **Grafana**: Provides interactive dashboards and visualizations using Prometheus as the data source.
 
-Username: admin
+The Node.js application exposes metrics at the `/metrics` endpoint, which is configured for Prometheus to scrape.
 
-Password: admin
+## Backup Procedures
 
-Configure Grafana to use Prometheus as a data source and build interactive dashboards from Node.js metrics.
+### Automated MongoDB Backups
 
-💾 MongoDB Backups
-Step 1: Start Backup Container
-bash
-Copy
-Edit
-docker-compose -f docker-compose.mongodb-backup.yml up -d
-This will run a scheduled container to backup MongoDB.
+Run the MongoDB backup process:
 
-Step 2: How It Works
-Backups are stored in the backup/local-backups/ directory.
+```bash
+docker-compose -f docker-compose.mongodb-backup.yml up
+```
 
-Backups are named with a timestamp like:
-mongodb_backup_20250412_163308.gz
+This executes the `backup-mongodb.sh` script which creates compressed backups of the MongoDB database.
 
-The backup script:
+### Backup Schedule
 
-Uses mongodump with gzip compression
+To schedule regular backups, consider setting up a cron job:
 
-Keeps only the 7 most recent backups
+```bash
+# Example: Run backup daily at 2 AM
+0 2 * * * cd /path/to/project && docker-compose -f docker-compose.mongodb-backup.yml up
+```
 
-Deletes older ones automatically
+### Backup Location
 
-Step 3: Backup Script (backup/backup-mongodb.sh)
-bash
-Copy
-Edit
-#!/bin/bash
+Backups are stored in the `backup/local-backups` directory with timestamps in the format `mongodb_backup_YYYYMMDD_HHMMSS.gz`.
 
-TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-BACKUP_DIR="/backups"
-BACKUP_FILENAME="mongodb_backup_${TIMESTAMP}.gz"
+## NGINX Configuration
 
-mkdir -p ${BACKUP_DIR}
+The application uses NGINX as a reverse proxy with the following configuration:
 
-echo "Starting MongoDB backup at $(date)"
-mongodump --host mongodb --port 27017 --username root --password example --authenticationDatabase admin --gzip --archive=${BACKUP_DIR}/${BACKUP_FILENAME}
+```nginx
+server {
+    listen 80;
+    location / {
+        proxy_pass http://nodejs-app:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
+```
 
-if [ $? -eq 0 ]; then
-  echo "Backup completed successfully: ${BACKUP_DIR}/${BACKUP_FILENAME}"
-  ls -t ${BACKUP_DIR}/mongodb_backup_*.gz | tail -n +8 | xargs rm -f
-  echo "Removed old backups, keeping the 7 most recent ones"
-else
-  echo "Backup failed!"
-fi
+This configuration:
+- Listens on port 80
+- Forwards requests to the Node.js application running on port 3000
+- Properly handles WebSocket connections
+- Preserves client IP addresses and hostnames
 
-echo "Backup process completed at $(date)"
-Make sure the mongodb host, port, and credentials match your Docker Compose setup.
+## Troubleshooting
 
-🐳 Docker Compose Summary
-Compose File	Purpose
-docker-compose.yml	Main application, MongoDB, NGINX
-docker-compose.monitoring.yml	Prometheus and Grafana
-docker-compose.mongodb-backup.yml	MongoDB backup container
-✅ Prerequisites
-Ensure you have the following installed:
+### Common Issues
 
-Docker
+1. **Application not accessible**:
+   - Check if all containers are running: `docker-compose ps`
+   - Verify NGINX configuration
+   - Check Node.js app logs: `docker-compose logs nodejs-app`
 
-Docker Compose
+2. **Monitoring not working**:
+   - Ensure Prometheus can reach the application metrics endpoint
+   - Check Prometheus targets page for scraping errors
+   - Verify Grafana data source configuration
 
-🧰 Useful Docker Commands
-bash
-Copy
-Edit
-docker-compose up -d                   # Start all services
-docker-compose -f <file>.yml up -d     # Start services from specific file
-docker-compose logs -f                 # Follow logs
-docker-compose down                    # Stop and remove containers
-docker-compose build                   # Rebuild containers
-📬 Contact
-For feedback or support, open an issue in this repository.
+3. **Backup failures**:
+   - Check backup logs: `docker-compose -f docker-compose.mongodb-backup.yml logs`
+   - Ensure MongoDB container is accessible
+   - Verify backup script permissions
 
-vbnet
-Copy
-Edit
+## Maintenance
 
-Let me know if you'd like to also generate Grafana dashboard templates or Prometheus alert rules as part of the repo!
+### Updating the Application
 
+1. Pull latest changes from the repository
+2. Rebuild and restart containers:
+   ```bash
+   docker-compose down
+   docker-compose up -d --build
+   ```
 
+### Viewing Logs
 
+```bash
+# View logs from all services
+docker-compose logs
 
+# View logs from a specific service
+docker-compose logs [service-name]
 
+# Follow logs in real-time
+docker-compose logs -f [service-name]
+```
 
+## CI/CD Integration
 
+The project includes a `bitbucket-pipelines.yml` file for continuous integration and deployment through Bitbucket Pipelines. Refer to this file for the defined CI/CD workflow.
