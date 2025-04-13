@@ -5,11 +5,11 @@ const app = express();
 
 // Create a Registry to register the metrics
 const register = new promClient.Registry();
-// Add a default label which is added to all metrics
+
 register.setDefaultLabels({
   app: 'nodejs-mongodb-app'
 });
-// Enable the collection of default metrics
+
 promClient.collectDefaultMetrics({ register });
 
 // Custom metrics
@@ -29,7 +29,7 @@ const httpRequestCounter = new promClient.Counter({
 });
 register.registerMetric(httpRequestCounter);
 
-// Middleware to track request duration and count
+
 app.use((req, res, next) => {
   const end = httpRequestDurationMicroseconds.startTimer();
   res.on('finish', () => {
@@ -40,7 +40,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// Middleware to parse JSON request bodies
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -50,13 +50,12 @@ app.get('/metrics', async (req, res) => {
   res.end(await register.metrics());
 });
 
-// MongoDB connection string with auth credentials
+
 const mongoURI = process.env.MONGO_URI;
 
-// Create a MongoDB client
 const client = new MongoClient(mongoURI);
 
-// Connect to MongoDB and insert sample data
+
 async function connectAndSeedDB() {
   try {
     await client.connect();
@@ -199,7 +198,7 @@ app.get('/items', async (req, res) => {
 // Add a route to insert new data into MongoDB
 app.post('/items', async (req, res) => {
   try {
-    // Extract item data from request body
+
     const { name, description } = req.body;
     
     // Validate required fields
@@ -216,7 +215,7 @@ app.post('/items', async (req, res) => {
       createdAt: new Date()
     });
     
-    // Return success response
+    
     res.status(201).json({ 
       success: true, 
       message: 'Item added successfully',
@@ -232,7 +231,7 @@ app.listen(3000, () => {
   console.log('Server is running on port 3000');
 });
 
-// Handle application shutdown
+
 process.on('SIGINT', async () => {
   await client.close();
   console.log('MongoDB connection closed');
