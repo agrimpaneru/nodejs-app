@@ -183,3 +183,20 @@ docker-compose logs [service-name]
 docker-compose logs -f [service-name]
 ```
 
+## CI/CD Integration
+
+The project uses Bitbucket Pipelines for continuous integration and deployment with the configuration defined in `bitbucket-pipelines.yml`.
+
+
+
+
+### Pipeline Workflow
+
+1. **Trigger**: Any push to the `master` branch automatically triggers the pipeline.
+2. **Authentication**: The pipeline logs into Docker Hub using credentials stored as secure repository variables (`DOCKER_USERNAME` and `DOCKER_PASSWORD`).
+3. **Versioning**: Each build is tagged with both `latest` and the short commit hash for version tracking.
+4. **Deployment**: The Docker image is built and pushed to Docker Hub, making it available for deployment.
+
+### Security Note
+
+Docker Hub credentials are stored as secure repository variables in Bitbucket to prevent exposure in the codebase.
