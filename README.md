@@ -39,7 +39,30 @@ git clone [repository-url]
 cd [repository-name]
 ```
 
-### Step 2: Deploy the Application
+### Step 2: Create Environment Configuration
+
+Create a `.env` file in the root directory of the project with your custom configuration:
+
+```bash
+touch .env
+```
+
+Add the following configuration to the `.env` file, replacing the values with your own secure credentials:
+
+```
+# MongoDB Configuration
+MONGO_USERNAME=root
+MONGO_PASSWORD=example
+MONGO_DB_NAME=myapp
+MONGO_PORT=27017
+
+# Nginx Configuration
+NGINX_PORT=8001
+```
+
+**Important Note**: For security reasons, the `.env` file is not pushed to the repository and should be created locally on your deployment server. Never commit sensitive credentials to version control.
+
+### Step 3: Deploy the Application
 
 Deploy the main application stack including Node.js app, MongoDB, and NGINX reverse proxy:
 
@@ -49,7 +72,7 @@ docker-compose up -d
 
 This command builds and starts all services defined in `docker-compose.yml`. The `-d` flag runs containers in the background.
 
-### Step 3: Verify Deployment
+### Step 4: Verify Deployment
 
 Access the application at `http://localhost:8001` .
 
